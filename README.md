@@ -37,7 +37,7 @@ Claims one or more indices on the punchcard. Only the authority can claim. Fails
 **Accounts:**
 | Index | Writable | Signer | Description |
 |-------|----------|--------|-------------|
-| 0 | No | Yes | Authority |
+| 0 | Yes | Yes | Authority |
 | 1 | Yes | No | Punchcard account |
 
 **Data:**
@@ -47,14 +47,12 @@ Claim { indices: Vec<u64> }
 
 ## Account Structure
 
-```
-+----------------+----------+
-| authority      | 32 bytes |
-| capacity       | 8 bytes  |
-| claimed        | 8 bytes  |
-| bits           | ceil(capacity / 8) bytes |
-+----------------+----------+
-```
+| Field     | Size                     |
+|-----------|--------------------------|
+| authority | 32 bytes                 |
+| capacity  | 8 bytes                  |
+| claimed   | 8 bytes                  |
+| bits      | ceil(capacity / 8) bytes |
 
 ## Errors
 

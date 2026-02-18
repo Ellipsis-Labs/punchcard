@@ -33,7 +33,7 @@ fn claim_ix(authority: &Pubkey, punchcard: &Pubkey, indices: Vec<u64>) -> Instru
     Instruction {
         program_id: PROGRAM_ID,
         accounts: vec![
-            AccountMeta::new_readonly(*authority, true),
+            AccountMeta::new(*authority, true),
             AccountMeta::new(*punchcard, false),
         ],
         data: borsh::to_vec(&PunchcardInstruction::Claim { indices }).unwrap(),
