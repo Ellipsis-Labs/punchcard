@@ -1,0 +1,21 @@
+[package]
+name = "punchcard"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib", "lib"]
+
+[dependencies]
+borsh = { version = "1.5", features = ["derive"] }
+bytemuck = { version = "1.14", features = ["derive"] }
+five8_const = "0.1"
+pinocchio = { version = "0.10", features = ["cpi", "copy"] }
+pinocchio-system = "0.5"
+
+[dev-dependencies]
+litesvm = "0.3"
+solana-sdk = "~2.0.5"
+
+[features]
+no-entrypoint = []
