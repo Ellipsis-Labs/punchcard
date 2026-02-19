@@ -1,7 +1,7 @@
 [package]
 name = "punchcard"
 version = "0.1.0"
-edition = "2024"
+edition = "2021"
 
 [lib]
 crate-type = ["cdylib", "lib"]
@@ -13,9 +13,6 @@ five8_const = "0.1"
 pinocchio = "0.9"
 pinocchio-pubkey = "0.3"
 pinocchio-system = "0.4"
-
-[build-dependencies]
-solana-program = "3"
 
 [dev-dependencies]
 litesvm = "0.9.1"

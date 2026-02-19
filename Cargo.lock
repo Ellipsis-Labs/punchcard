@@ -1652,7 +1652,6 @@ dependencies = [
  "pinocchio",
  "pinocchio-pubkey",
  "pinocchio-system",
- "solana-program",
  "solana-sdk",
 ]
 
