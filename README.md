@@ -2,6 +2,9 @@
 
 A native Solana program for tracking claimed indices using a bit vector.
 
+
+<img width="480" height="210" alt="image" src="https://github.com/user-attachments/assets/7bbab0d5-eaf5-45f8-b57a-5b416abc5a1a" />
+
 ## Overview
 
 Punchcard creates on-chain accounts that track N claimable slots using a compact bit representation. Each slot can only be claimed once by the designated authority. When all slots are claimed, the account is automatically closed and rent is returned.
