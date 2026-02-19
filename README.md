@@ -80,3 +80,8 @@ cargo test-sbf
 - [borsh](https://crates.io/crates/borsh) - Instruction serialization
 - [bytemuck](https://crates.io/crates/bytemuck) - Safe zero-copy casting
 - [litesvm](https://crates.io/crates/litesvm) - Integration testing (dev)
+
+## Verifiable build
+```
+solana-verify build -b solanafoundation/solana-verifiable-build@sha256:ff3b148fb6adc3025c46ac38f132f473ccbdc4391f253234d98aa6519aec07f8
+```
