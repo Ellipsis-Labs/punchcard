@@ -5,7 +5,6 @@ use solana_sdk::{
     pubkey::Pubkey,
     signature::Keypair,
     signer::Signer,
-    system_program,
     transaction::Transaction,
 };
 
@@ -23,7 +22,7 @@ fn create_ix(payer: &Pubkey, punchcard: &Pubkey, capacity: u64) -> Instruction {
         accounts: vec![
             AccountMeta::new(*payer, true),
             AccountMeta::new(*punchcard, true),
-            AccountMeta::new_readonly(system_program::ID, false),
+            AccountMeta::new_readonly(Pubkey::new_from_array(pinocchio_system::ID), false),
         ],
         data: borsh::to_vec(&PunchcardInstruction::Create { capacity }).unwrap(),
     }
@@ -250,7 +249,9 @@ fn test_claim_all_closes_account() {
     // Account should be closed
     match svm.get_account(&punchcard.pubkey()) {
         None => {}
-        Some(acc) => assert!(acc.lamports == 0 || acc.owner == system_program::ID),
+        Some(acc) => {
+            assert!(acc.lamports == 0 || acc.owner == Pubkey::new_from_array(pinocchio_system::ID))
+        }
     }
 
     // Rent returned

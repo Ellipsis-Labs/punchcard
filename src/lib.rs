@@ -1,11 +1,10 @@
 use pinocchio::{
-    entrypoint, error::ProgramError, sysvars::Sysvar, AccountView, Address, ProgramResult,
+    ProgramResult, account_info::AccountInfo, entrypoint, program_error::ProgramError,
+    pubkey::Pubkey, sysvars::Sysvar,
 };
 use pinocchio_system::instructions::CreateAccount;
 
-pub const ID: Address = Address::new_from_array(five8_const::decode_32_const(
-    "pcWKVSdcdDUKabPz4pVfaQ2jMod1kWv3LqeQivjKXiF",
-));
+pub const ID: Pubkey = five8_const::decode_32_const("pcWKVSdcdDUKabPz4pVfaQ2jMod1kWv3LqeQivjKXiF");
 
 // --- State ---
 
@@ -50,7 +49,7 @@ impl<'a> Punchcard<'a> {
 
     pub fn claim(&mut self, index: u64) -> ProgramResult {
         if self.bits.get(index) {
-            return Err(Error::AlreadyClaimed.into());
+            return Err(Error::AlreadyClaimed.into_program_error());
         }
         self.bits.set(index);
         self.header.claimed += 1;
@@ -75,9 +74,9 @@ pub enum Error {
     AlreadyClaimed = 2,
 }
 
-impl From<Error> for ProgramError {
-    fn from(e: Error) -> Self {
-        ProgramError::Custom(e as u32)
+impl Error {
+    pub fn into_program_error(self) -> ProgramError {
+        ProgramError::Custom(self as u32)
     }
 }
 
@@ -86,20 +85,20 @@ impl From<Error> for ProgramError {
 #[cfg(not(feature = "no-entrypoint"))]
 entrypoint!(process);
 
-pub fn process(program_id: &Address, accounts: &[AccountView], data: &[u8]) -> ProgramResult {
+pub fn process(program_id: &Pubkey, accounts: &[AccountInfo], data: &[u8]) -> ProgramResult {
     match borsh::from_slice(data).map_err(|_| ProgramError::InvalidInstructionData)? {
         Instruction::Create { capacity } => create(program_id, accounts, capacity),
         Instruction::Claim { indices } => claim(program_id, accounts, &indices),
     }
 }
 
-fn create(program_id: &Address, accounts: &[AccountView], capacity: u64) -> ProgramResult {
+fn create(program_id: &Pubkey, accounts: &[AccountInfo], capacity: u64) -> ProgramResult {
     let [payer, punchcard, _system] = accounts else {
         return Err(ProgramError::NotEnoughAccountKeys);
     };
 
     let space = Punchcard::space(capacity);
-    let rent = pinocchio::sysvars::rent::Rent::get()?.try_minimum_balance(space)?;
+    let rent = pinocchio::sysvars::rent::Rent::get()?.minimum_balance(space);
 
     CreateAccount {
         from: payer,
@@ -110,16 +109,16 @@ fn create(program_id: &Address, accounts: &[AccountView], capacity: u64) -> Prog
     }
     .invoke()?;
 
-    let mut data = punchcard.try_borrow_mut()?;
+    let mut data = punchcard.try_borrow_mut_data()?;
     let card = Punchcard::from_bytes(&mut data);
-    card.header.authority = payer.address().to_bytes();
+    card.header.authority = *payer.key();
     card.header.capacity = capacity;
     card.header.claimed = 0;
 
     Ok(())
 }
 
-fn claim(program_id: &Address, accounts: &[AccountView], indices: &[u64]) -> ProgramResult {
+fn claim(program_id: &Pubkey, accounts: &[AccountInfo], indices: &[u64]) -> ProgramResult {
     let [authority, punchcard] = accounts else {
         return Err(ProgramError::NotEnoughAccountKeys);
     };
@@ -127,21 +126,21 @@ fn claim(program_id: &Address, accounts: &[AccountView], indices: &[u64]) -> Pro
     if !authority.is_signer() {
         return Err(ProgramError::MissingRequiredSignature);
     }
-    if !punchcard.owned_by(program_id) {
+    if !punchcard.is_owned_by(program_id) {
         return Err(ProgramError::IncorrectProgramId);
     }
 
     let (capacity, claimed) = {
-        let mut data = punchcard.try_borrow_mut()?;
+        let mut data = punchcard.try_borrow_mut_data()?;
         let mut card = Punchcard::from_bytes(&mut data);
 
-        if card.header.authority != *authority.address().as_ref() {
-            return Err(Error::InvalidAuthority.into());
+        if card.header.authority != *authority.key() {
+            return Err(Error::InvalidAuthority.into_program_error());
         }
 
         for &i in indices {
             if i >= card.header.capacity {
-                return Err(Error::IndexOutOfBounds.into());
+                return Err(Error::IndexOutOfBounds.into_program_error());
             }
             card.claim(i)?;
         }
@@ -150,9 +149,10 @@ fn claim(program_id: &Address, accounts: &[AccountView], indices: &[u64]) -> Pro
     };
 
     if claimed == capacity {
-        authority.set_lamports(authority.lamports() + punchcard.lamports());
-        punchcard.set_lamports(0);
-        punchcard.try_borrow_mut()?.fill(0);
+        let punchcard_lamports = punchcard.lamports();
+        *authority.try_borrow_mut_lamports()? += punchcard_lamports;
+        *punchcard.try_borrow_mut_lamports()? = 0;
+        punchcard.try_borrow_mut_data()?.fill(0);
         punchcard.close()?;
     }
 

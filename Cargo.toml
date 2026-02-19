@@ -10,12 +10,16 @@ crate-type = ["cdylib", "lib"]
 borsh = { version = "1.5", features = ["derive"] }
 bytemuck = { version = "1.14", features = ["derive"] }
 five8_const = "0.1"
-pinocchio = { version = "0.10", features = ["cpi", "copy"] }
-pinocchio-system = "0.5"
+pinocchio = "0.9"
+pinocchio-pubkey = "0.3"
+pinocchio-system = "0.4"
+
+[build-dependencies]
+solana-program = "3"
 
 [dev-dependencies]
-litesvm = "0.3"
-solana-sdk = "~2.0.5"
+litesvm = "0.9.1"
+solana-sdk = "3"
 
 [features]
 no-entrypoint = []
